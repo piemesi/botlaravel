@@ -8,6 +8,9 @@ use Illuminate\Foundation\Console\Kernel as ConsoleKernel;
 
 class Kernel extends ConsoleKernel
 {
+
+    const OUTPUT_PATH = '/var/www/html/task_output.log';
+
     /**
      * The Artisan commands provided by your application.
      *
@@ -27,7 +30,9 @@ class Kernel extends ConsoleKernel
     {
         // $schedule->command('inspire')
         //          ->hourly();
-        $schedule->command(CheckTaskToSend::class)->everyMinute();
+        $schedule->command(CheckTaskToSend::class)->everyMinute()
+            ->sendOutputTo(self::OUTPUT_PATH);
+        //->emailOutputTo('w@gaynulin.ru');
     }
 
     /**
