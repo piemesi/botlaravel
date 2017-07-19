@@ -52,7 +52,7 @@ return [
     */
 
     'url' => env('APP_URL', 'http://localhost'),
-
+    'prod_url' => env('PROD_URL', 'http://botme.top'),
     /*
     |--------------------------------------------------------------------------
     | Application Timezone

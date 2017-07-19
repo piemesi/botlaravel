@@ -39,7 +39,7 @@ class TT
 
         $channelsList[0] = 'soft_made';
         $channelsList[1] = 'soft_made';
-
+        $prodHost = config('app.prod_url');
         foreach ($postsList as $post) {
 
             $postPeriodId = $post['periods'][0]['id'] ?? null;
@@ -64,7 +64,7 @@ class TT
                 }
 
 
-                $inline_button1 = ["text" => "http://0.0.0.0:3009/show/{$post['channel_id']}/{$post['hash']}", "callback_data" => '/goToLink'];
+                $inline_button1 = ["text" => "{$prodHost}/show/{$post['channel_id']}/{$post['hash']}", "callback_data" => '/goToLink'];
 //                $inline_button2 = ["text" => "консьерж", "callback_data" => '/urgent'];
 //                $inline_button3 = ["text" => "сотруднику", "callback_data" => '/stuff'];
                 $inline_keyboard = [[$inline_button1]]; //, $inline_button2, $inline_button3
@@ -79,7 +79,7 @@ class TT
                     'text' => '*' . $post['title'] . '' . ($post['minutes_to_read'] ? ' [' . $post['minutes_to_read'] . ' мин.]' : '') . '* 
 ' . $post['preview'] . "
 
-" . $converter->convert("<a href='http://0.0.0.0:3009/show/{$post['channel_id']}/{$post['hash']}' target='_blank'>Страница материала</a>"),
+" . $converter->convert("<a href='{$prodHost}/show/{$post['channel_id']}/{$post['hash']}' target='_blank'>Страница материала</a>"),
 
 //_Чем можем помочь?_',
                     'parse_mode' => $parseMode,
@@ -100,7 +100,7 @@ class TT
                 $markdown = $converter->convert($html);
 
 
-                $inline_button1 = ["text" => "http://0.0.0.0:3009/show/{$post['channel_id']}/{$post['hash']}", "callback_data" => '/goToLink'];
+                $inline_button1 = ["text" => "{$prodHost}/show/{$post['channel_id']}/{$post['hash']}", "callback_data" => '/goToLink'];
 //                $inline_button2 = ["text" => "консьерж", "callback_data" => '/urgent'];
 //                $inline_button3 = ["text" => "сотруднику", "callback_data" => '/stuff'];
                 $inline_keyboard = [[$inline_button1]]; //, $inline_button2, $inline_button3
@@ -120,7 +120,7 @@ class TT
                         . "          
                        
                         
-" . $converter->convert("<a href='http://0.0.0.0:3009/show/{$post['channel_id']}/{$post['hash']}' target='_blank'>Перейти на страницу материала</a>"),
+" . $converter->convert("<a href='{$prodHost}/show/{$post['channel_id']}/{$post['hash']}' target='_blank'>Перейти на страницу материала</a>"),
 //_Чем можем помочь?_',
                     'parse_mode' => $parseMode,
                     'disable_web_page_preview' => true,

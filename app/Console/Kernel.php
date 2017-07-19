@@ -31,7 +31,7 @@ class Kernel extends ConsoleKernel
         // $schedule->command('inspire')
         //          ->hourly();
         $schedule->command(CheckTaskToSend::class)->everyMinute()
-            ->sendOutputTo(self::OUTPUT_PATH);
+            ->appendOutputTo(self::OUTPUT_PATH);
         //->emailOutputTo('w@gaynulin.ru');
     }
 
