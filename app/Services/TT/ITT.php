@@ -16,4 +16,6 @@ interface ITT
     public function getPostByHash(string $hash);
 
     public function checkChannelsPosts(int $all = 0);
+
+    public function getChannelsByCompanyId(int $companyId);
 }

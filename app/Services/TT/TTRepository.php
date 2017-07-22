@@ -9,6 +9,7 @@
 namespace App\Services\TT;
 
 
+use App\Channel;
 use App\Task;
 use Carbon\Carbon;
 
@@ -16,7 +17,7 @@ class TTRepository
 {
     // @toDo неотправленные -> время прошло, но periods.deleted_at (telegram_message_id) -> null
 
-    public function getChannelAllPosts(int $channelId, bool $unSent = false, bool $sent = false, bool $deleted = true)
+    public function getChannelAllPosts(int $channelId, bool $unSent = false, bool $sent = false, bool $deleted = false)
     {
         $tasksSel = Task::where(['channel_id' => $channelId]);
 
@@ -55,6 +56,11 @@ class TTRepository
     public function getPostByHash(string $hash)
     {
         return Task::where(['hash' => $hash])->first();
+    }
+
+    public function getChannelsByCompanyId(int $companyId)
+    {
+        return Channel::where(['company_id' => $companyId])->get()->toArray();
     }
 
     public function getAllPostToSend()

@@ -11,6 +11,7 @@ namespace App\Services\TT;
 
 use App\Period;
 use App\Task;
+use Carbon\Carbon;
 
 class TTController implements ITT
 {
@@ -47,11 +48,19 @@ class TTController implements ITT
             foreach ($sentItems as $sentPeriodId => $telegramMessageId) {
                 echo $sentPeriodId.'--->'.$telegramMessageId.PHP_EOL;
 
-                Period::find($sentPeriodId)->update(['telegram_message_id' => $telegramMessageId]);
-                Period::find($sentPeriodId)->delete();
+                $period = Period::find($sentPeriodId);
+                $period->telegram_message_id = $telegramMessageId;
+                $period->sent = Carbon::now();
+                $period->save();
+                $period->delete();
+//                $period->update(['telegram_message_id' => $telegramMessageId]);
             }
         }
 
     }
 
+    public function getChannelsByCompanyId(int $companyId)
+    {
+        return $this->repo->getChannelsByCompanyId($companyId);
+    }
 }

@@ -27,6 +27,7 @@ Route::post('updatedata/{post_id}', 'TelegramController@updateData')->name('hb_u
 //
 //Route::get('get_token', 'TelegramController@getToken' )->name('hb_start');
 //
+Route::get('get_channels/{company_id}', 'TelegramController@getChannels')->name('get_channels');
 Route::get('get_post/{hash}', 'TelegramController@getPost')->name('get_post');
 Route::get('post/{hash}/show/increase', 'TelegramController@increasePostShows')->name('increase_post_shows');
 
@@ -53,7 +54,9 @@ Route::group(['prefix' => 'hb'], function () {
 
 });
 
-Route::post('savedata', 'TelegramController@saveData')->name('hb_save');
+Route::post('channel/{channelId}', 'TelegramController@updateChannel')->name('update_channel');
+Route::post('channel', 'TelegramController@createChannel')->name('create_channel');
+Route::post('savedata/{channelId}', 'TelegramController@saveData')->name('save_data');
 //Route::post(['prefix' => 'savedata'], function () {
 //
 //

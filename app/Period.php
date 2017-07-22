@@ -11,7 +11,7 @@ class Period extends Model
 
     protected $table='periods';
 
-    protected $fillable = ['start'];
+    protected $fillable = ['start', 'sent'];
 
     public function task(){
         return $this->belongsTo(Task::class);

@@ -9,6 +9,7 @@
 namespace App\Services\TT;
 
 
+use App\Channel;
 use App\Task;
 use League\HTMLToMarkdown\HtmlConverter;
 use Telegram;
@@ -25,6 +26,11 @@ class TT
 
     }
 
+    private function getChannelsList(){
+        return Channel::all()->pluck('telegram_id', 'id');
+
+
+    }
 
     public function sendPosts(array $postsList = [])
     {
@@ -36,9 +42,8 @@ class TT
             return $sentItems;
         }
         $converter = new HtmlConverter();
-
-        $channelsList[0] = 'soft_made';
-        $channelsList[1] = 'soft_made';
+        
+        $channelsList = $this->getChannelsList();
         $prodHost = config('app.prod_url');
         foreach ($postsList as $post) {
 
