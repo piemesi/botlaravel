@@ -125,7 +125,9 @@ class TT
                         . "          
                        
                         
-" . $converter->convert("<a href='{$prodHost}/show/{$post['channel_id']}/{$post['hash']}' target='_blank'>Перейти на страницу материала</a>"),
+"
+             //           .$converter->convert("<a href='{$prodHost}/show/{$post['channel_id']}/{$post['hash']}' target='_blank'>Перейти на страницу материала</a>" )
+                    ,
 //_Чем можем помочь?_',
                     'parse_mode' => $parseMode,
                     'disable_web_page_preview' => true,
