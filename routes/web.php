@@ -1,6 +1,6 @@
 <?php
 
-Artisan::call('cache:clear');
+//Artisan::call('cache:clear');
 
 /*
 |--------------------------------------------------------------------------
@@ -30,6 +30,8 @@ Route::post('updatedata/{post_id}', 'TelegramController@updateData')->name('hb_u
 Route::get('get_channels/{company_id}', 'TelegramController@getChannels')->name('get_channels');
 Route::get('get_post/{hash}', 'TelegramController@getPost')->name('get_post');
 Route::get('post/{hash}/show/increase', 'TelegramController@increasePostShows')->name('increase_post_shows');
+
+Route::get('get_user_auth_hash/{ls_key}', 'TelegramController@getUserAuthHash')->name('get_user_auth_hash');
 
 Route::get('get_posts_unsent/{channel_id}', 'TelegramController@getChannelPostsUnSent')->name('hb_posts_unsent');
 

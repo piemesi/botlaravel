@@ -28,7 +28,8 @@ class TTRepository
 //            $tasksSel->where(['active' => 1, 'sent' => null]);
             $tasksSel->where(['active' => 1])
                 ->whereHas('periods', function ($query) use ($now) {
-                    $query->where('start', '>', $now);
+                    //$query->where('start', '>', $now);
+                    $query->where('telegram_message_id', 0);
                 });
         }
 
@@ -49,6 +50,11 @@ class TTRepository
         }
 
         $tasks = $tasksSel->get()->toArray();
+
+
+        foreach ($tasks as &$task){
+            $task['order_time'] = $task['periods'][0]['start'] ?? $task['sent'];
+        }
 
         return $tasks;
     }

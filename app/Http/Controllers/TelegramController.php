@@ -9,6 +9,7 @@ use App\Task;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 //use Telegram\Bot\Laravel\Facades\Telegram;
+use Illuminate\Support\Facades\Cache;
 use Telegram\Bot\Commands\Command;
 use Telegram;
 
@@ -20,6 +21,19 @@ class TelegramController extends Controller
     public function __construct(ITT $ITT)
     {
         $this->tt = $ITT;
+    }
+
+    public function getUserAuthHash(Request $request, string $lsKey)
+    {
+        if ($lsKey && Cache::tags(['auth', 'start'])->get($lsKey)) {
+            return response()->json(['auth_key' => $lsKey]);
+        }
+
+        $code = rand(1000, 9999);
+        $key = md5(time() . $code);
+        $tenMinutes = Carbon::now()->addMinutes(10);
+        Cache::tags(['auth', 'start'])->put($key, $code, $tenMinutes);
+        return response()->json(['auth_key' => $key]);
     }
 
     public function getChannelPostsSent(Request $request, $channelId = 1)
@@ -67,15 +81,16 @@ class TelegramController extends Controller
         $input = $request->all();
         $task = new Channel();
         $task->title = $input['title'];
-        $task->manager_account = $input['manager_id'] ;
-        $task->telegram_id = $input['telegram_id'] ;
-        $task->company_id = $input['company_id'] ;
+        $task->manager_account = $input['manager_id'];
+        $task->telegram_id = $input['telegram_id'];
+        $task->company_id = $input['company_id'];
         $task->hide = 0;
         $task->save();
 
 
         return $task->toArray();
     }
+
     public function saveData(Request $request, int $channelId)
     {
         file_put_contents('./body11.txt', print_r($request->all(), 1));
@@ -96,10 +111,12 @@ class TelegramController extends Controller
 
 
         $dates = explode(',', $input['dates']);
+
         foreach ($dates as $date) {
             $periods = new Period();
             $periods->start = new Carbon($date);
             $periods->task_id = $task->id;
+
             $periods->save();
         }
 
@@ -107,7 +124,7 @@ class TelegramController extends Controller
 //        file_put_contents('/data.txt',print_r($request, true));
 //
 //        print_r($request);
-        return '';
+        return response()->json(['success' => true]);
     }
 
 
@@ -147,13 +164,12 @@ class TelegramController extends Controller
         $task = Channel::find($channelId);
 
 
-
         $task->update($input);
 
 
-
-        return  $input;//$task->toArray();
+        return $input;//$task->toArray();
     }
+
     public function updateData(Request $request)
     {
         file_put_contents('./bodyUpdate.txt', print_r($request->all(), 1));
@@ -165,7 +181,7 @@ class TelegramController extends Controller
 
             Task::where('id', $input['id'])->update(['hide' => 1]);
             $deletedRows = Task::where('id', $input['id'])->delete();
-            return response()->json(['tasks' =>  $this->tt->getChannelAllPosts($input['channel_id'])]);
+            return response()->json(['tasks' => $this->tt->getChannelAllPosts($input['channel_id'])]);
         }
 
         $task = Task::find($input['id']);
@@ -176,7 +192,7 @@ class TelegramController extends Controller
                 $task->restore();
                 Task::where('id', $input['id'])->update(['hide' => 0]);
             }
-            return response()->json(['taskse' =>  $this->tt->getChannelAllPosts($input['channel_id'])]);
+            return response()->json(['taskse' => $this->tt->getChannelAllPosts($input['channel_id'])]);
         }
 
         $datesArray = [];

@@ -52,10 +52,10 @@ return [
         'memcached' => [
             'driver' => 'memcached',
             'persistent_id' => env('MEMCACHED_PERSISTENT_ID'),
-            'sasl' => [
-                env('MEMCACHED_USERNAME'),
-                env('MEMCACHED_PASSWORD'),
-            ],
+//            'sasl' => [
+//                env('MEMCACHED_USERNAME'),
+//                env('MEMCACHED_PASSWORD'),
+//            ],
             'options' => [
                 // Memcached::OPT_CONNECT_TIMEOUT  => 2000,
             ],
@@ -68,7 +68,18 @@ return [
             ],
         ],
 
+
         'redis' => [
+
+//            'client' => 'predis',
+
+            'default' => [
+                'host' => env('REDIS_HOST', 'localhost'),
+                'password' => env('REDIS_PASSWORD', null),
+                'port' => env('REDIS_PORT', 6379),
+                'database' => 0,
+            ],
+
             'driver' => 'redis',
             'connection' => 'default',
         ],

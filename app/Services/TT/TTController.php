@@ -48,10 +48,16 @@ class TTController implements ITT
             foreach ($sentItems as $sentPeriodId => $telegramMessageId) {
                 echo $sentPeriodId.'--->'.$telegramMessageId.PHP_EOL;
 
+                $t = Carbon::now();
                 $period = Period::find($sentPeriodId);
                 $period->telegram_message_id = $telegramMessageId;
-                $period->sent = Carbon::now();
+                $period->sent =$t ;
                 $period->save();
+
+                $task = Task::find($period->task_id);
+                $task->sent = $t;
+                $task->save();
+
                 $period->delete();
 //                $period->update(['telegram_message_id' => $telegramMessageId]);
             }
