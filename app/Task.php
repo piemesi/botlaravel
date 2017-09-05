@@ -11,7 +11,16 @@ class Task extends Model
 
     protected $table='tasks';
 
-    protected $fillable = ['title', 'text','hide', 'active'];
+    protected $fillable = ['title', 'text','hide', 'active', 'minutes_to_read', 'preview', 'need_link'];
+
+    protected $casts = [
+        'need_link' => 'integer',
+    ];
+
+    public function setNeedLinkAttribute($value)
+    {
+        $this->attributes['need_link'] = $value === 'true' ? 1 : 0;
+    }
 
 
     /**
