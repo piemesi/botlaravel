@@ -18,4 +18,6 @@ interface ITT
     public function checkChannelsPosts(int $all = 0);
 
     public function getChannelsByCompanyId(int $companyId);
+
+    public function getChannelById(int $channelId);
 }

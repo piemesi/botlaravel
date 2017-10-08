@@ -23,10 +23,13 @@ Route::get('/', function () {
 
  file_put_contents('./body0.txt', print_r( $_REQUEST,1 ));
 
-Route::post('updatedata/{post_id}', 'TelegramController@updateData')->name('hb_update');
+Route::post('feedback/{company_id}', 'TelegramController@feedback')->name('feedback');
+
+Route::post('updatedata/{post_hash}', 'TelegramController@updateData')->name('hb_update');
 //
 //Route::get('get_token', 'TelegramController@getToken' )->name('hb_start');
 //
+Route::get('get_channel/{channel_id}', 'TelegramController@getChannel')->name('get_channel');
 Route::get('get_channels/{company_id}', 'TelegramController@getChannels')->name('get_channels');
 Route::get('get_post/{hash}', 'TelegramController@getPost')->name('get_post');
 Route::get('post/{hash}/show/increase', 'TelegramController@increasePostShows')->name('increase_post_shows');
@@ -55,27 +58,15 @@ Route::group(['prefix' => 'hb'], function () {
     Route::get('start', 'TelegramController@start')->name('hb_start');
 
 });
+Route::post('identuser/{auth_key}', 'TelegramController@identUser')->name('ident_user');
 
 Route::post('channel/{channelId}', 'TelegramController@updateChannel')->name('update_channel');
 Route::post('channel', 'TelegramController@createChannel')->name('create_channel');
 Route::post('savedata/{channelId}', 'TelegramController@saveData')->name('save_data');
-//Route::post(['prefix' => 'savedata'], function () {
-//
-//
-//
-//});
 
-//Route::any('savedata', 'TelegramController@saveData')->name('hb_save');
 
-//function () {
-//    $body = json_encode(file_get_contents('php://input'));
-//
-//    file_put_contents('/body4.txt',$body);
-////    Route::post('save', 'TelegramController@saveData')->name('hb_save');
-//});
-//Route::group(['prefix' => 'savedata'], function () {
-//    $body = json_encode(file_get_contents('php://input'));
-//
-//    file_put_contents('./body2.txt',print_r($body,1));
-//     Route::post('save', 'TelegramController@saveData')->name('hb_save');
-//});
+
+Route::get('/telegram/'.config('telegram.bot_token').'/removeWH', 'TelegramController@removeWH')->name('rm_wh');
+Route::get('/telegram/'.config('telegram.bot_token').'/setWH', 'TelegramController@setWH')->name('set_wh');
+Route::post('/telegram/'.config('telegram.bot_token').'/webhook', 'TelegramController@webhook')->name('webhook');
+Route::get('/get_auth_data/{hash}', ['middleware'=>'cors','uses'=>'TelegramController@getAuthData'])->name('get_auth_data');

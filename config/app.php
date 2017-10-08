@@ -53,6 +53,7 @@ return [
 
     'url' => env('APP_URL', 'http://localhost'),
     'prod_url' => env('PROD_URL', 'http://botme.top'),
+    'auth_data_path' => env('AUTH_DATA_PATH', '/var/www/html/auth'),
     /*
     |--------------------------------------------------------------------------
     | Application Timezone

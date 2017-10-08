@@ -69,6 +69,11 @@ class TTRepository
         return Channel::where(['company_id' => $companyId])->get()->toArray();
     }
 
+    public function getChannelById(int $channelId)
+    {
+        return Channel::where(['id' => $channelId])->get()->toArray();
+    }
+
     public function getAllPostToSend()
     {
         $now = Carbon::now('Europe/Moscow');

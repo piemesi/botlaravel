@@ -69,4 +69,9 @@ class TTController implements ITT
     {
         return $this->repo->getChannelsByCompanyId($companyId);
     }
+
+    public function getChannelById(int $channelId)
+    {
+        return $this->repo->getChannelById($channelId);
+    }
 }

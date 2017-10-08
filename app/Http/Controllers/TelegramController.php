@@ -3,18 +3,21 @@
 namespace App\Http\Controllers;
 
 use App\Channel;
+use App\Company;
 use App\Period;
 use App\Services\TT\ITT;
 use App\Task;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
-//use Telegram\Bot\Laravel\Facades\Telegram;
 use Illuminate\Support\Facades\Cache;
 use Telegram\Bot\Commands\Command;
 use Telegram;
 
 class TelegramController extends Controller
 {
+
+    const MITINO_CHAT_ID = 237268064,
+        VIKICHKI_CHAT_ID = 111003162;
 
     protected $tt;
 
@@ -31,9 +34,52 @@ class TelegramController extends Controller
 
         $code = rand(1000, 9999);
         $key = md5(time() . $code);
-        $tenMinutes = Carbon::now()->addMinutes(10);
+        $tenMinutes = Carbon::now()->addMinutes(30);
         Cache::tags(['auth', 'start'])->put($key, $code, $tenMinutes);
         return response()->json(['auth_key' => $key]);
+    }
+
+    public function identUser(Request $request, string $authKey = null)
+    {
+        file_put_contents('./bodyUpdate.txt', print_r($request->all(), 1));
+        $input = $request->all();
+
+        $authData = json_decode($input['authData']);
+
+        $telegram_id = $authData->id;
+
+        $fn = $authData->first_name ?? '';
+        $ln = $authData->last_name ?? '';
+        $un = $authData->username ?? '';
+
+
+        $company = Company::where('telegram_id', $telegram_id)->first();
+        if (!$company) {
+            $company = new Company();
+            $company->auth_key = $input['lsRel'];
+            $company->cooked_key = base64_encode($telegram_id . '_' . $fn . "_" . $ln . "_" . $un);
+            $company->telegram_first_name = $fn;
+            $company->telegram_last_name = $ln;
+            $company->telegram_user_name = $un;
+            $company->telegram_auth_data = $input['authData'];
+            $company->telegram_id = $telegram_id;
+            $company->title = '';
+
+        } else {
+            $company->auth_key = $input['lsRel'];
+            $basedData = base64_encode($telegram_id . '_' . $fn . "_" . $ln . "_" . $un);
+            if ($company->cooked_key !== $basedData) {
+                $company->cooked_key = $basedData;
+            }
+
+            $company->telegram_first_name = $company->telegram_first_name && $company->telegram_first_name !== '' ? $company->telegram_first_name : $fn;
+            $company->telegram_last_name = $company->telegram_last_name && $company->telegram_last_name !== '' ? $company->telegram_last_name : $ln;
+            $company->telegram_user_name = $company->telegram_user_name && $company->telegram_user_name !== '' ? $company->telegram_user_name : $un;
+            $company->telegram_auth_data = $company->telegram_auth_data ?? $input['authData'];
+        }
+
+        $company->save();
+        return response()->json(['company' => $company]);
     }
 
     public function getChannelPostsSent(Request $request, $channelId = 1)
@@ -58,6 +104,12 @@ class TelegramController extends Controller
     {
         $task = $this->tt->getPostByHash($hash);
         return response()->json(['post' => $task]);
+    }
+
+    public function getChannel(Request $request, $channelId)
+    {
+        $channel = $this->tt->getChannelById($channelId);
+        return response()->json(['channels' => $channel]);
     }
 
     public function getChannels(Request $request, $companyId)
@@ -96,13 +148,15 @@ class TelegramController extends Controller
         file_put_contents('./body11.txt', print_r($request->all(), 1));
 
 
+        $channel = Channel::find($channelId);
+
         $input = $request->all();
         $task = new Task();
         $task->title = $input['title'];
         $task->text = $input['text'];
         $task->preview = $input['preview'] ?? '';
-        $task->need_link = $input['need_link'] === 'true' ? 1 : 0;
-        $task->company_id = 1;
+        $task->need_link = $input['need_link'];
+        $task->company_id = $channel->company_id;
         $task->hash = md5($task->text . time());
         $task->channel_id = $channelId;
         $task->minutes_to_read = $input['minutes_to_read'] ?? 0;
@@ -121,119 +175,127 @@ class TelegramController extends Controller
         }
 
 
-//        file_put_contents('/data.txt',print_r($request, true));
-//
-//        print_r($request);
+        try {
+            $this->sendMeNotification($task, $channel);
+        } catch (\Exception $e) {
+        }
+
         return response()->json(['success' => true]);
     }
 
+    private function sendMeNotification(Task $task, Channel $channel = null, $type = 'add')
+    {
+        $prodHost = config('app.prod_url');
+        $linkToPost = "[{$prodHost}/show/{$task->channel_id}/{$task->hash}]";
 
-//    private function getChannelAllPosts($channelId, bool $unSent = false, bool $sent = false, bool $deleted = false)
-//    {
-//
-////        $tasksSel = Task::where(['channel_id' => $channelId]);
-////
-////        if ($unSent) {
-////            $tasksSel->where(['active' => 1, 'sent' => null]);
-////        }
-////
-////        if ($sent) {
-////            $tasksSel->where(['sent' => 1]);
-////        }
-////
-////        $tasksSel->with('periods');
-////
-////        if ($deleted) {
-////            $tasksSel->withTrashed();
-////        }
-////
-////
-////        $tasks = $tasksSel->get()->toArray();
-////
-////        return $tasks;
-//    }
+
+        $response = Telegram::sendMessage(['chat_id' => static::MITINO_CHAT_ID,
+            'text' => "*Добавлен пост!* 
+_Kem:_ " . json_encode([$channel->id, $channel->telegram_id, $channel->company->id, $channel->company->telegram_first_name, $channel->company->telegram_last_name, $channel->company->telegram_user_name]) . " 
+_Ссылка на пост_:   " . $linkToPost . "",
+            'parse_mode' => 'markdown']); //, 'reply_markup' => $btns
+        return $response;
+    }
+
     public function updateChannel(Request $request, int $channelId)
     {
         file_put_contents('./bodyUpdateChannel.txt', print_r($request->all(), 1));
 
         $input = $request->all();
-//        $input['active'] = $input['active'] === 'true' ? 1 : 0;
-//        $input['hide'] = $input['hide'] === 'true' ? 1 : 0;
-
 
         $task = Channel::find($channelId);
-
-
         $task->update($input);
-
 
         return $input;//$task->toArray();
     }
 
-    public function updateData(Request $request)
+    public function feedback(Request $request, int $companyId)
     {
-        file_put_contents('./bodyUpdate.txt', print_r($request->all(), 1));
+        try {
 
-        $input = $request->all();
-        $input['active'] = $input['active'] === 'true' ? 1 : 0;
-        $input['hide'] = $input['hide'] === 'true' ? 1 : 0;
-        if ($input['hide']) {
+            $company = Company::find($companyId);
+            $input = $request->all();
+            $msg = $input['message'];
 
-            Task::where('id', $input['id'])->update(['hide' => 1]);
-            $deletedRows = Task::where('id', $input['id'])->delete();
+            Telegram::sendMessage(['chat_id' => static::MITINO_CHAT_ID,
+                'text' => "*FEEDBACK!* 
+_Kem:_ " . json_encode([$company->id, $company->telegram_first_name, $company->telegram_last_name, $company->telegram_user_name]) . " 
+_Ссылка на пост_:   " . $msg . "",
+                'parse_mode' => 'markdown']); //, 'reply_markup' => $btns
+
+            return response()->json(['success' => true]);
+
+        } catch (\Exception $e) {
+            return response()->json(['success' => false, 'error' => $e->getMessage()]);
+        }
+
+    }
+
+    /**
+     * @param Request $request
+     * @param string $materialHash
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function updateData(Request $request, string $materialHash)
+    {
+
+        try {
+
+            file_put_contents('./bodyUpdate.txt', print_r($request->all(), 1));
+            $input = $request->all();
+
+            if ($input['hide']) {
+                Task::where('hash', $materialHash)->update(['hide' => 1]);
+                $deletedRows = Task::where('hash', $materialHash)->delete();
+                return response()->json(['tasks' => $this->tt->getChannelAllPosts($input['channel_id'])]);
+            }
+
+            $task = Task::where('hash', $materialHash)->first();
+            if (!$task) {
+                $task = Task::where('hash', $materialHash)->withTrashed();
+                if ($task) {
+                    $task->restore();
+                    Task::where('hash', $materialHash)->update(['hide' => 0]);
+                }
+                return response()->json(['tasks' => $this->tt->getChannelAllPosts($input['channel_id'])]);
+            }
+
+            $datesArray = [];
+            if (!isset($input['dates']) || empty($input['dates'])) {
+                $input['active'] = 0;
+            } else {
+                $datesArray = explode(',', $input['dates']);
+            }
+
+            $input['hash'] = $input['hash'] ?? md5($input['text'] . time());
+
+            unset($input['dates']);
+
+
+            unset($input['sent']);
+            unset($input['deleted_at']);
+            $task->update($input);
+
+            $taskId = $task->id;
+            $deletedRows = Period::where('task_id', $taskId)->delete();
+
+            if (count($datesArray)) {
+
+                foreach ($datesArray as $date) {
+
+                    $periods = new Period();
+                    $periods->start = new Carbon($date);
+                    $periods->task_id = $taskId;
+                    $periods->save();
+                }
+            }
+
             return response()->json(['tasks' => $this->tt->getChannelAllPosts($input['channel_id'])]);
+
+        } catch (\Exception $e) {
+            return response()->json(['error' => $e]);
         }
 
-        $task = Task::find($input['id']);
-
-        if (!$task) {
-            $task = Task::where('id', $input['id'])->withTrashed();
-            if ($task) {
-                $task->restore();
-                Task::where('id', $input['id'])->update(['hide' => 0]);
-            }
-            return response()->json(['taskse' => $this->tt->getChannelAllPosts($input['channel_id'])]);
-        }
-
-        $datesArray = [];
-        if (!isset($input['dates']) && empty($input['dates'])) {
-            $input['active'] = 0;
-        } else {
-            $datesArray = explode(',', $input['dates']);
-        }
-
-        $input['hash'] = $input['hash'] ?? md5($input['text'] . time());
-
-        unset($input['dates']);
-
-
-        unset($input['sent']);
-        unset($input['deleted_at']);
-//        $task->title = $input['title'];
-//        $task->text = $input['text'];
-//        $task->company_id = $input['company_id'];
-//        $task->hash = $input['company_id'] ?? md5($task->text . time());
-//        $task->channel_id = $input['channel_id'];
-//        $task->hide = $input['hide'];
-//        $task->active = $input['active'];
-        $task->update($input);
-//        print_r($input);
-
-
-        $deletedRows = Period::where('task_id', $input['id'])->delete();
-
-        if (count($datesArray)) {
-
-            foreach ($datesArray as $date) {
-
-                $periods = new Period();
-                $periods->start = new Carbon($date);
-                $periods->task_id = $input['id'];
-                $periods->save();
-            }
-        }
-
-        return response()->json(['tasks' => $this->tt->getChannelAllPosts($input['channel_id'])]);
     }
 
     public function start()
@@ -257,28 +319,6 @@ Lorem Ipsum является стандартной "рыбой" для текс
         ]);
 
         print_r($botId);
-
-        //config('app.soft_made')
-
-//
-//        $command = new Telegram\Bot\Commands\HelpCommand();
-//        Telegram::addCommand($command);
-
-//        Telegram::sendMessage(['chat_id'=>'@soft_made','text'=>'Message with buttons']);
-
-
-//        $keyboard = [['text'=>'something' ],['text'=>'something2' ]];
-////            ['7', '8', '9'],
-////            ['4', '5', '6'],
-////            ['1', '2', '3'],
-////            ['0']
-////        ];
-//
-//        $replyMarkup = Telegram::replyKeyboardMarkup([
-//            'inline_keyboard' => $keyboard,
-//            'resize_keyboard' => true,
-//            'one_time_keyboard' => true
-//        ]);
 
 
 //        $inline_button1 = ["text"=>"Google url","url"=>"http://google.com"];
@@ -310,5 +350,27 @@ _Чем можем помочь?_',
 
 
         return '';
+    }
+
+
+    public function removeWH()
+    {
+        $response = Telegram::removeWebhook();
+        print_r($response);
+    }
+
+    public function setWH()
+    {
+        # $telegram = new Api('BOT TOKEN');
+        $response = Telegram::setWebhook(['url' => config('app.url') . '/telegram/' . config('telegram.bot_token') . '/webhook']);
+        print_r($response);
+
+    }
+
+    public function getAuthData($hash)
+    {
+        $path = config('app.auth_data_path');
+        $data = file_get_contents($path . '/'. $hash . '.txt');
+        return response()->json(['data' => $data]);
     }
 }

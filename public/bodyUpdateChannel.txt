@@ -1,7 +1,7 @@
 Array
 (
-    [title] => Softmade
-    [telegram_id] => soft_made
+    [title] => botme_top
+    [telegram_id] => botme_top
     [company_id] => 1
-    [manager_id] => mitino
+    [manager_id] => Mitino
 )

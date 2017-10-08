@@ -19,7 +19,22 @@ class Task extends Model
 
     public function setNeedLinkAttribute($value)
     {
-        $this->attributes['need_link'] = $value === 'true' ? 1 : 0;
+        $this->attributes['need_link'] = $value === 'true' || $value === true || $value === 1 ? 1 : 0;
+    }
+
+    public function setActiveAttribute($value)
+    {
+        $this->attributes['active'] = $value === 'true' || $value === true || $value === '1' || $value === 1 ? 1 : 0;
+    }
+
+    public function setHideAttribute($value)
+    {
+        $this->attributes['hide'] = $value === 'true' || $value === true || $value === 1 ? 1 : 0;
+    }
+
+    public function setTextAttribute($value)
+    {
+        $this->attributes['text'] = $value ?? '';
     }
 
 
