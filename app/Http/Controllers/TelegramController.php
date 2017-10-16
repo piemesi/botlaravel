@@ -370,7 +370,86 @@ _Чем можем помочь?_',
     public function getAuthData($hash)
     {
         $path = config('app.auth_data_path');
-        $data = file_get_contents($path . '/'. $hash . '.txt');
+        $data = file_get_contents($path . '/' . $hash . '.txt');
         return response()->json(['data' => $data]);
     }
+
+    public function webhook(Request $request)
+    {
+        $updates = Telegram::getWebhookUpdates();
+        $path = public_path();
+        file_put_contents($path . '/last.txt', print_r($updates, 1));
+        try {
+            return $this->processWebhook($updates);
+        } catch (\Exception $e) {
+            $response = Telegram::sendMessage([ //editMessageText
+                'chat_id' => static::MITINO_CHAT_ID, //237268064,
+                'text' => "Ошибка при обработке webhook'a: " . '<--- *|' . $e->getLine() . '|*
+_' . $e->getMessage() . ':_  
+Запрос: [' . config('app.url') . '/last.txt]
+Ошибка: [' . config('app.url') . '/lastError.txt]
+',
+                'parse_mode' => 'markdown'
+            ]);
+
+            return $response;
+        }
+
+
+    }
+
+
+    private function processWebhook($updates)
+    {
+        $m = $updates->getMessage() ?? $updates->getCallbackQuery() ?? $updates->getEditedMessage();
+        if (!$m) {
+//            if ($inlineResult = $this->processInline($updates)) {
+//                return $inlineResult;
+//            }
+            throw new \Exception('No message | no Edited Message!');
+        }
+
+        $callbackData = $m->getData();
+        if ($callbackData) {
+            return $this->processCallback($updates, $m, $callbackData);
+        }
+
+        $text = $m->getText();
+        if (substr(trim($text), 0, 6) === '/start') {
+            $hash = substr(trim($text), 7);
+
+            $data = [
+                'm' => $updates,
+                'id' => $m->getFrom()->getId(),
+                'first_name' => $m->getFrom()->getFirstName(),
+                'last_name' => $m->getFrom()->getLastName(),
+                'username' => $m->getFrom()->getUsername(),
+                'language_code' => $m->getFrom()->getLanguageCode(),
+            ];
+
+            $path = config('app.auth_data_path');
+            file_put_contents($path . '/' . $hash . '.txt', base64_encode(json_encode($data)));
+
+            $response = Telegram::sendMessage(['chat_id' => $m->getFrom()->getId(), 'text' => "*Вы авторизованы* 
+Успешной работы!    
+ 
+BotMe.top: [" . config('prod.url') . "/channel/100/25]
+       
+ ", 'parse_mode' => 'markdown']); //, 'reply_markup' => $btns
+            return 'success';
+
+        }
+
+        $item = $updates->getChannelPost();
+        $chat = $item->getChat();
+
+        $response = Telegram::forwardMessage([
+            'chat_id' => static::MITINO_CHAT_ID,
+            'from_chat_id' => $chat->getId(),
+            'message_id' => $item->getMessageId()
+        ]);
+
+        return 'ok';
+    }
+
 }
