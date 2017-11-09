@@ -428,7 +428,14 @@ _' . $e->getMessage() . ':_
             ];
 
             $path = config('app.auth_data_path');
-            file_put_contents($path . '/' . $hash . '.txt', base64_encode(json_encode($data)));
+            try {
+                file_put_contents($path . '/' . $hash . '.txt', base64_encode(json_encode($data)));
+            } catch (\Exception $e) {
+                Cache::tags(['auth', 'start'])->flush();
+                throw new \Exception('No auth folder with www-data own in root path! ' .
+                    $e->getMessage() . '[LINE:' . $e->getLine() . ']');
+            }
+
 
             $response = Telegram::sendMessage(['chat_id' => $m->getFrom()->getId(), 'text' => "*Вы авторизованы* 
 Успешной работы!    
