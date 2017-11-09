@@ -145,7 +145,7 @@ class TelegramController extends Controller
 
     public function saveData(Request $request, int $channelId)
     {
-        file_put_contents('./body11.txt', print_r($request->all(), 1));
+//        file_put_contents('./body11.txt', print_r($request->all(), 1));
 
 
         $channel = Channel::find($channelId);

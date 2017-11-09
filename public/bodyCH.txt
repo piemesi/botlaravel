@@ -1,7 +1,0 @@
-Array
-(
-    [title] => botme_top
-    [telegram_id] => botme_top
-    [company_id] => 1
-    [manager_id] => Mitino22
-)

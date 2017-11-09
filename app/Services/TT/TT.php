@@ -26,7 +26,8 @@ class TT
 
     }
 
-    private function getChannelsList(){
+    private function getChannelsList()
+    {
         return Channel::all()->pluck('telegram_id', 'id');
 
 
@@ -42,7 +43,9 @@ class TT
             return $sentItems;
         }
         $converter = new HtmlConverter();
-        
+//        $converter->getConfig()->setOption('italic_style', '_');
+        $converter->getConfig()->setOption('bold_style', '*');
+
         $channelsList = $this->getChannelsList();
         $prodHost = config('app.prod_url');
         foreach ($postsList as $post) {
@@ -96,14 +99,14 @@ class TT
             } else {
 
                 if (strlen($post['text']) < 2) {
-                    echo '[WRN]Message is to short to send!' . PHP_EOL;
+                    echo '[WRN]Message is too short to send!' . PHP_EOL;
                     continue;
                 }
 
 
                 $html = $post['text'];
                 $markdown = $converter->convert($html);
-
+                $markdown = $this->fixMarkdown($markdown);
 
                 $inline_button1 = ["text" => "{$prodHost}/show/{$post['channel_id']}/{$post['hash']}", "callback_data" => '/goToLink'];
 //                $inline_button2 = ["text" => "консьерж", "callback_data" => '/urgent'];
@@ -153,6 +156,18 @@ class TT
         return $sentItems;
 
 
+    }
+
+    /**
+     * Function to fix "\" near digit/s in list in the beginning of row
+     *
+     * @param $markdown
+     * @return mixed
+     */
+    private function fixMarkdown(string $markdown): string
+    {
+        $markdown = preg_replace('/<u[^>]*>([^<]*?)<\/u[^>]*>/', '$1', $markdown);
+        return preg_replace('/(\\s\d+)\\\/i', "$1", $markdown);
     }
 
 
